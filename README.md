@@ -1,5 +1,7 @@
 # Screech
 
+Probá la [live preview gratuita y sin registro](https://voice.masivo.com.ar).
+
 SPA mobile-first de audio grupal sobre LiveKit SFU, con SQLite. Requiere Node >=22.22.0. Redis está apagado por defecto y no es necesario para un único LiveKit.
 
 ## Desarrollo local sin Docker
