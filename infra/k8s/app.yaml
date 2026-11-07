@@ -8,7 +8,7 @@ data:
   PRODUCT_NAME: Screech
   SQLITE_PATH: /app/data/screech.sqlite
   LIVEKIT_URL: http://livekit:7880
-  LIVEKIT_PUBLIC_URL: wss://screch.masivo.com.ar/livekit
+  LIVEKIT_PUBLIC_URL: wss://voice.masivo.com.ar/livekit
   LIVEKIT_PROXY_ENABLED: "true"
   LIVEKIT_BINARY: /usr/local/bin/livekit-server
   LIVEKIT_WEBHOOK_URL: http://screech:80/api/webhooks/livekit
@@ -173,15 +173,15 @@ metadata:
   name: screech
   namespace: screech-dev
   annotations:
-    traefik.e2e/host: screch.masivo.com.ar
+    traefik.e2e/host: voice.masivo.com.ar
 spec:
   routes:
     - kind: Rule
-      match: Host(`screch.masivo.com.ar`)
+      match: Host(`voice.masivo.com.ar`)
       services:
         - name: screech
           port: 80
   tls:
     certResolver: letsEncrypt
     domains:
-      - main: screch.masivo.com.ar
+      - main: voice.masivo.com.ar

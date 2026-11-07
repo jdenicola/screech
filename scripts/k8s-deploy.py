@@ -20,4 +20,4 @@ manifest=re.sub(r'registry\.dumont\.com\.ar:5000/screech:[A-Za-z0-9._-]+',a.imag
 run(['apply','-f','-'],input=manifest)
 for name in ['livekit','screech']:run(['rollout','status','deployment/'+name,'-n','screech-dev','--timeout=300s'])
 run(['get','pods,pvc,services','-n','screech-dev'])
-print('IngressRoute configurado: https://screch.masivo.com.ar — verificar HTTPS y medios desde Internet.')
+print('IngressRoute configurado: https://voice.masivo.com.ar — verificar HTTPS y medios desde Internet.')

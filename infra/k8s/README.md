@@ -1,6 +1,6 @@
 # Desarrollo en Kubernetes
 
-Contexto usado: `kubernetes-admin@kubernetes`. Namespace `screech-dev`. Host solicitado: **screch.masivo.com.ar** (con una sola e después de scr). Se sigue el esquema existente de coffee-api/authsrv: `IngressRoute` Traefik, TLS con resolver `letsEncrypt`, Service **LoadBalancer** MetalLB y credencial de registro `regcred`. El watcher del Traefik externo solo publica servicios LoadBalancer; no instalar otro ingress controller.
+Contexto usado: `kubernetes-admin@kubernetes`. Namespace `screech-dev`. Host solicitado: **voice.masivo.com.ar**. Se sigue el esquema existente de coffee-api/authsrv: `IngressRoute` Traefik, TLS con resolver `letsEncrypt`, Service **LoadBalancer** MetalLB y credencial de registro `regcred`. El watcher del Traefik externo solo publica servicios LoadBalancer; no instalar otro ingress controller.
 
 ## Construir y desplegar
 
@@ -24,7 +24,7 @@ El deploy crea un secreto LiveKit aleatorio solo si no existe; nunca lo reemplaz
 
 - API: una réplica, estrategia Recreate y PVC RWO de 1 Gi con clase Longhorn, montado en `/app/data`. SQLite se conserva al reemplazar pods. No borrar el PVC durante actualizaciones; hacer backup antes de cambios de formato. Es una base nueva de desarrollo; no se copiaron canales de la ejecución local.
 - LiveKit: una réplica, Recreate, hostNetwork y nodo fijo `kube-lab-node1` (10.10.60.108). Medios en **7881/TCP y 7882/UDP**. DNS ClusterFirstWithHostNet. `enableServiceLinks: false` evita que Kubernetes inyecte LIVEKIT_PORT=tcp://... y rompa el parser del binario.
-- Señalización: navegador → HTTPS/WSS `screch.masivo.com.ar/livekit` → Traefik → Service screech → proxy GET WebSocket → Service livekit:7880.
+- Señalización: navegador → HTTPS/WSS `voice.masivo.com.ar/livekit` → Traefik → Service screech → proxy GET WebSocket → Service livekit:7880.
 - Publicación: IngressRoute CRD con anotación `traefik.e2e/host` y resolver `letsEncrypt`. MetalLB asignó **10.10.60.212** a screech. Esa IP es el backend HTTP, no el destino de medios.
 - Para clientes fuera de la LAN, la red necesita reenviar 7881/TCP y 7882/UDP hacia **10.10.60.108**, o proporcionar TURN. El ingress HTTPS no transporta WebRTC. Se anuncian candidatos internos para clientes de LAN y externos mediante STUN.
 
@@ -35,7 +35,7 @@ kubectl get pods,pvc,services -n screech-dev
 kubectl logs -n screech-dev deployment/livekit --tail=30
 curl http://10.10.60.212/api/config
 node --import tsx scripts/check-signal.ts http://10.10.60.212 ws://10.10.60.212/livekit
-curl https://screch.masivo.com.ar/api/config
+curl https://voice.masivo.com.ar/api/config
 ```
 
 Imagen inicial: `registry.dumont.com.ar:5000/screech:dev-20261107-01`, digest `sha256:8357824d3435a98d0fc46e56108fe14e66b27d94ecb14a8727ebb8416c7723c6`.

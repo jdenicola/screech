@@ -65,7 +65,7 @@ Para habilitar una instancia existente: `REDIS_ENABLED=true`, `REDIS_ADDRESS=hos
 
 ## Desarrollo en Kubernetes
 
-Deployment aplicado en `screech-dev` para `screch.masivo.com.ar`, siguiendo Traefik/MetalLB y Longhorn del clúster. Ver [manifiestos y pasos](infra/k8s/README.md). La API y LiveKit están desplegados; comprobar el acceso HTTPS del proxy externo y los puertos de medios antes de considerar validado el uso público.
+Deployment aplicado en `screech-dev` para `voice.masivo.com.ar`, siguiendo Traefik/MetalLB y Longhorn del clúster. Ver [manifiestos y pasos](infra/k8s/README.md). La API y LiveKit están desplegados; comprobar el acceso HTTPS del proxy externo y los puertos de medios antes de considerar validado el uso público.
 
 ## Producción con Docker
 
