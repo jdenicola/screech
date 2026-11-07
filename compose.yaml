@@ -1,0 +1,22 @@
+services:
+  livekit:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.livekit
+    env_file: .env
+    environment:
+      LIVEKIT_WEBHOOK_URL: http://app:3001/api/webhooks/livekit
+    ports: ["7880:7880", "7881:7881", "7882:7882/udp"]
+    restart: unless-stopped
+  app:
+    build: .
+    env_file: .env
+    environment:
+      SQLITE_PATH: /app/data/screech.sqlite
+      LIVEKIT_URL: http://livekit:7880
+    volumes: ["database:/app/data"]
+    ports: ["3001:3001"]
+    depends_on: [livekit]
+    restart: unless-stopped
+volumes:
+  database:

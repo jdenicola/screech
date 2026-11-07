@@ -1,0 +1,187 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: screech-config
+  namespace: screech-dev
+data:
+  NODE_ENV: production
+  PRODUCT_NAME: Screech
+  SQLITE_PATH: /app/data/screech.sqlite
+  LIVEKIT_URL: http://livekit:7880
+  LIVEKIT_PUBLIC_URL: wss://screch.masivo.com.ar/livekit
+  LIVEKIT_PROXY_ENABLED: "true"
+  LIVEKIT_BINARY: /usr/local/bin/livekit-server
+  LIVEKIT_WEBHOOK_URL: http://screech:80/api/webhooks/livekit
+  LIVEKIT_USE_EXTERNAL_IP: "true"
+  LIVEKIT_ADVERTISE_INTERNAL_IP: "true"
+  REDIS_ENABLED: "false"
+  AUDIO_BITRATE_BPS: "32000"
+  CHANNEL_MAX_CLIENTS: "32"
+  CHANNEL_TTL_SECONDS: "86400"
+  VAD_THRESHOLD_DBFS: "-40"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: screech-data
+  namespace: screech-dev
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: screech
+  namespace: screech-dev
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: screech
+  template:
+    metadata:
+      labels:
+        app: screech
+    spec:
+      enableServiceLinks: false
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: app
+          image: registry.dumont.com.ar:5000/screech:dev-20261107-06
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3001
+          envFrom:
+            - configMapRef:
+                name: screech-config
+            - secretRef:
+                name: screech-livekit
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+          startupProbe:
+            httpGet: {path: /api/config, port: http}
+            periodSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet: {path: /api/config, port: http}
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: {path: /api/config, port: http}
+            periodSeconds: 20
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: "1", memory: 512Mi}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: screech-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: screech
+  namespace: screech-dev
+spec:
+  type: LoadBalancer
+  selector:
+    app: screech
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: livekit
+  namespace: screech-dev
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: livekit
+  template:
+    metadata:
+      labels:
+        app: livekit
+    spec:
+      # A stable LAN address for ICE/TCP and UDP; HTTPS goes through the app proxy.
+      nodeSelector:
+        kubernetes.io/hostname: kube-lab-node1
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      enableServiceLinks: false
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: livekit
+          image: registry.dumont.com.ar:5000/screech:dev-20261107-01
+          imagePullPolicy: IfNotPresent
+          command: [node, scripts/livekit.mjs]
+          envFrom:
+            - configMapRef:
+                name: screech-config
+            - secretRef:
+                name: screech-livekit
+          ports:
+            - {name: signal, containerPort: 7880, protocol: TCP}
+            - {name: ice-tcp, containerPort: 7881, protocol: TCP}
+            - {name: ice-udp, containerPort: 7882, protocol: UDP}
+          startupProbe:
+            httpGet: {path: /, port: signal}
+            periodSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet: {path: /, port: signal}
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: {path: /, port: signal}
+            periodSeconds: 20
+          resources:
+            requests: {cpu: 250m, memory: 256Mi}
+            limits: {cpu: "1", memory: 1Gi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: livekit
+  namespace: screech-dev
+spec:
+  selector:
+    app: livekit
+  ports:
+    - name: signal
+      port: 7880
+      targetPort: signal
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: screech
+  namespace: screech-dev
+  annotations:
+    traefik.e2e/host: screch.masivo.com.ar
+spec:
+  routes:
+    - kind: Rule
+      match: Host(`screch.masivo.com.ar`)
+      services:
+        - name: screech
+          port: 80
+  tls:
+    certResolver: letsEncrypt
+    domains:
+      - main: screch.masivo.com.ar

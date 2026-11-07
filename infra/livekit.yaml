@@ -1,0 +1,12 @@
+# Referencia mínima sin Redis. Los lanzadores generan la configuración efectiva
+# desde .env mediante scripts/livekit-config.mjs (local y Docker).
+port: 7880
+rtc:
+  tcp_port: 7881
+  udp_port: 7882
+keys:
+  devkey: local-development-secret-change-me-32
+webhook:
+  api_key: devkey
+  urls:
+    - http://127.0.0.1:3001/api/webhooks/livekit

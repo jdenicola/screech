@@ -1,0 +1,9 @@
+node_modules/
+web/dist/
+.env
+data/
+.local/
+__pycache__/
+
+# Project memory
+LEDGER.md 

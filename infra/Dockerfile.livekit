@@ -1,0 +1,7 @@
+FROM livekit/livekit-server:v1.13.11 AS livekit
+FROM node:22.22-alpine
+COPY --from=livekit /livekit-server /usr/local/bin/livekit-server
+WORKDIR /app
+COPY scripts/livekit*.mjs ./scripts/
+ENV LIVEKIT_BINARY=/usr/local/bin/livekit-server
+CMD ["node", "scripts/livekit.mjs"]
